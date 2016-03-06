@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/kelseyhightower/confd/backends"
+	"github.com/locked/confd/backends"
 	"github.com/kelseyhightower/confd/log"
 	"github.com/kelseyhightower/confd/resource/template"
 )
@@ -178,6 +178,8 @@ func initConfig() error {
 			}
 		case "redis":
 			config.BackendNodes = []string{"127.0.0.1:6379"}
+		case "mysql":
+			config.BackendNodes = []string{"127.0.0.1:3306"}
 		case "zookeeper":
 			config.BackendNodes = []string{"127.0.0.1:2181"}
 		}
@@ -189,6 +191,7 @@ func initConfig() error {
 		unsupportedBackends := map[string]bool{
 			"zookeeper": true,
 			"redis":     true,
+			"mysql":     true,
 			"dynamodb":  true,
 			"rancher":   true,
 		}

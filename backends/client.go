@@ -13,6 +13,7 @@ import (
 	"github.com/kelseyhightower/confd/backends/stackengine"
 	"github.com/kelseyhightower/confd/backends/vault"
 	"github.com/kelseyhightower/confd/backends/zookeeper"
+	"github.com/locked/confd/backends/mysql"
 	"github.com/kelseyhightower/confd/log"
 )
 
@@ -45,6 +46,8 @@ func New(config Config) (StoreClient, error) {
 		return rancher.NewRancherClient(backendNodes)
 	case "redis":
 		return redis.NewRedisClient(backendNodes, config.ClientKey)
+	case "mysql":
+		return mysql.NewMySQLClient(backendNodes, config.ClientKey)
 	case "env":
 		return env.NewEnvClient()
 	case "vault":
