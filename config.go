@@ -49,6 +49,8 @@ var (
 	watch             bool
 	appID             string
 	userID            string
+	backendConfigFile   string
+	configVersion     string
 )
 
 // A Config structure is used to configure confd.
@@ -76,6 +78,8 @@ type Config struct {
 	Watch        bool     `toml:"watch"`
 	AppID        string   `toml:"app_id"`
 	UserID       string   `toml:"user_id"`
+	BackendConfigFile string   `toml:"backend_config_file"`
+	ConfigVersion string   `toml:"config_version"`
 }
 
 func init() {
@@ -106,6 +110,8 @@ func init() {
 	flag.StringVar(&username, "username", "", "the username to authenticate as (only used with vault and etcd backends)")
 	flag.StringVar(&password, "password", "", "the password to authenticate with (only used with vault and etcd backends)")
 	flag.BoolVar(&watch, "watch", false, "enable watch support")
+	flag.StringVar(&configVersion, "config-version", "", "config version")
+	flag.StringVar(&backendConfigFile, "backend-config-file", "", "Backend config file")
 }
 
 // initConfig initializes the confd configuration by first setting defaults,
@@ -178,8 +184,8 @@ func initConfig() error {
 			}
 		case "redis":
 			config.BackendNodes = []string{"127.0.0.1:6379"}
-		case "mysql":
-			config.BackendNodes = []string{"127.0.0.1:3306"}
+		//case "mysql":
+		//	config.BackendNodes = []string{"127.0.0.1:3306"}
 		case "zookeeper":
 			config.BackendNodes = []string{"127.0.0.1:2181"}
 		}
@@ -221,6 +227,8 @@ func initConfig() error {
 		Username:     config.Username,
 		AppID:        config.AppID,
 		UserID:       config.UserID,
+		BackendConfigFile: config.BackendConfigFile,
+		ConfigVersion: config.ConfigVersion,
 	}
 	// Template configuration.
 	templateConfig = template.Config{
@@ -322,5 +330,9 @@ func setConfigFromFlag(f *flag.Flag) {
 		config.AppID = appID
 	case "user-id":
 		config.UserID = userID
+	case "config-version":
+		config.ConfigVersion = configVersion
+	case "backend-config-file":
+		config.BackendConfigFile = backendConfigFile
 	}
 }

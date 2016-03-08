@@ -7,45 +7,58 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/base64"
+	"encoding/json"
+	"os"
 )
 
 import _ "github.com/go-sql-driver/mysql"
 
 // Client is a wrapper around the redis client
 type Client struct {
-	client   sql.DB
-	machines []string
-	password string
+	client              sql.DB
+	backend_config_file string
+	version             string
+	key                 string
 }
 
-// Iterate through `machines`, trying to connect to each in turn.
-// Returns the first successful connection or the last error encountered.
-// Assumes that `machines` is non-empty.
-func tryConnect(machines []string, password string) (sql.DB, error) {
-	var err error
-	log.Debug(fmt.Sprintf("Trying to connect to mysql node"))
-		
-	conn, err := sql.Open("mysql", "tmpl:iopiop@tcp(172.16.12.2:3306)/tmpl")
-	if err != nil {
-		panic(err.Error())
-	}
-	return *conn, nil
+type MySQLConfig struct {
+    Host string
+    Name string
+    User string
+    Pass string
+    Key string
 }
 
-// Retrieves a connected redis client from the client wrapper.
-// Existing connections will be tested with a PING command before being returned. Tries to reconnect once if necessary.
-// Returns the established redis connection or the error encountered.
-func (c *Client) connectedClient() (sql.DB, error) {
-	return c.client, nil
-}
 
 // NewMySQLClient returns an *mysql.Client with a connection to named machines.
 // It returns an error if a connection to the cluster cannot be made.
-func NewMySQLClient(machines []string, password string) (*Client, error) {
+func NewMySQLClient(backend_config_file string, version string) (*Client, error) {
 	log.Info(fmt.Sprintf("NewMySQLClient"))
 	var err error
-	clientWrapper := &Client{ machines : machines, password: password }
-	clientWrapper.client, err = tryConnect(machines, password)
+	clientWrapper := &Client{ backend_config_file : backend_config_file, version: version }
+
+	//clientWrapper.client, err = tryConnect(machines, password)
+
+	log.Debug(fmt.Sprintf("backend_config_file: [%s]", backend_config_file))
+	file, _ := os.Open(backend_config_file)
+	decoder := json.NewDecoder(file)
+	conf    := MySQLConfig{}
+	err     = decoder.Decode(&conf)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	dsn := conf.User+":"+conf.Pass+"@tcp("+conf.Host+":3306)/"+conf.Name
+	log.Debug(fmt.Sprintf("Trying to connect to mysql: [%s]", dsn))
+	conn, err := sql.Open("mysql", dsn)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	clientWrapper.key = conf.Key
+
+	clientWrapper.client = *conn
+
 	return clientWrapper, err
 }
 
@@ -55,11 +68,12 @@ func Unpad(src []byte) []byte {
 	return src[:(length - unpadding)]
 }
 
-func decryptCBC(key []byte, cryptoText string) string {
+func decryptCBC(key []byte, cryptoText string, ivb64 string) string {
 	var block cipher.Block
 	var err error
 
-	//log.Info(fmt.Sprintf("decrypt [%s]", cryptoText))
+	log.Info(fmt.Sprintf("decrypt:[%s] iv:[%s]", cryptoText, ivb64))
+	iv, _ := base64.StdEncoding.DecodeString(ivb64)
 	ciphertext, _ := base64.StdEncoding.DecodeString(cryptoText)
 
 	padded_key := make([]byte, 32)
@@ -73,8 +87,8 @@ func decryptCBC(key []byte, cryptoText string) string {
 		panic("ciphertext too short")
 	}
 
-	iv := ciphertext[:aes.BlockSize]
-	ciphertext = ciphertext[aes.BlockSize:]
+	// iv := ciphertext[:aes.BlockSize]
+	//ciphertext = ciphertext[aes.BlockSize:]
 
 	cbc := cipher.NewCBCDecrypter(block, iv)
 	cbc.CryptBlocks(ciphertext, ciphertext)
@@ -88,22 +102,34 @@ func decryptCBC(key []byte, cryptoText string) string {
 // GetValues queries redis for keys prefixed by prefix.
 func (c *Client) GetValues(keys []string) (map[string]string, error) {
 	vars := make(map[string]string)
-	aes_key := []byte("HELP ME !!")
+
+	aes_key := make([]byte, 32)
+	copy(aes_key, c.key)
 
 	for _, key := range keys {
 		log.Info(fmt.Sprintf("GetValues [%s]", key))
-		rows, err := c.client.Query("SELECT * FROM kv WHERE k LIKE '"+key+"%'")
+		q := "SELECT * FROM config WHERE k LIKE '"+key+"%' AND version = "+c.version
+		fmt.Printf("query:[%s]\n", q)
+		rows, err := c.client.Query(q)
 		if err != nil {
 			panic(err.Error())
 		}
 		for rows.Next() {
-			var env int
+			var environment_name string
+			var id int
 			var version int
 			var k string
 			var v string
-			rows.Scan(&env, &version, &k, &v)
-			d := decryptCBC(aes_key, v)
-			fmt.Printf("%s = %s\n", k, d)
+			var iv string
+			var d string
+			var created string
+			rows.Scan(&id, &environment_name, &version, &k, &v, &iv, &created)
+			if v != "" && iv != "" {
+				d = decryptCBC(aes_key, v, iv)
+			} else {
+				d = v
+			}
+			//fmt.Printf("%s = %s / %s\n", k, v, d)
 			vars[k] = d
 		}
 	}

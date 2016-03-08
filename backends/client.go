@@ -47,7 +47,7 @@ func New(config Config) (StoreClient, error) {
 	case "redis":
 		return redis.NewRedisClient(backendNodes, config.ClientKey)
 	case "mysql":
-		return mysql.NewMySQLClient(backendNodes, config.ClientKey)
+		return mysql.NewMySQLClient(config.BackendConfigFile, config.ConfigVersion)
 	case "env":
 		return env.NewEnvClient()
 	case "vault":
