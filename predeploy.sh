@@ -21,6 +21,8 @@ BUILD_PATH=/home/$BUILD_USER/confd-$ENVIRONMENT
 
 ssh $BUILD_USER@$BUILD_SERVER "mkdir -p $BUILD_PATH"
 
+rsync -az --delete --exclude="bin/" ./ $BUILD_USER@$BUILD_SERVER:$BUILD_PATH/
+
 ssh $BUILD_USER@$BUILD_SERVER "cd $BUILD_PATH; bash build.sh"
 
 rsync -avz --dry-run $BUILD_USER@$BUILD_SERVER:$BUILD_PATH/bin/ bin/
