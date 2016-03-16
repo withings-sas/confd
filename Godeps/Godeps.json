@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/locked/confd",
+	"ImportPath": "git.corp.withings.com/confd",
 	"GoVersion": "go1.6",
 	"Packages": [
 		"backends/.."

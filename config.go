@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/locked/confd/backends"
+	"git.corp.withings.com/confd/backends"
 	"github.com/kelseyhightower/confd/log"
 	"github.com/kelseyhightower/confd/resource/template"
 )

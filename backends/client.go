@@ -13,7 +13,7 @@ import (
 	"github.com/kelseyhightower/confd/backends/stackengine"
 	"github.com/kelseyhightower/confd/backends/vault"
 	"github.com/kelseyhightower/confd/backends/zookeeper"
-	"github.com/locked/confd/backends/mysql"
+	"git.corp.withings.com/confd/backends/mysql"
 	"github.com/kelseyhightower/confd/log"
 )
 
