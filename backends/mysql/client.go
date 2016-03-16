@@ -37,8 +37,6 @@ func NewMySQLClient(backend_config_file string, version string) (*Client, error)
 	var err error
 	clientWrapper := &Client{ backend_config_file : backend_config_file, version: version }
 
-	//clientWrapper.client, err = tryConnect(machines, password)
-
 	log.Debug(fmt.Sprintf("backend_config_file: [%s]", backend_config_file))
 	file, _ := os.Open(backend_config_file)
 	decoder := json.NewDecoder(file)
@@ -72,7 +70,7 @@ func decryptCBC(key []byte, cryptoText string, ivb64 string) string {
 	var block cipher.Block
 	var err error
 
-	log.Info(fmt.Sprintf("decrypt:[%s] iv:[%s]", cryptoText, ivb64))
+	// log.Info(fmt.Sprintf("decrypt:[%s] iv:[%s]", cryptoText, ivb64))
 	iv, _ := base64.StdEncoding.DecodeString(ivb64)
 	ciphertext, _ := base64.StdEncoding.DecodeString(cryptoText)
 
@@ -87,15 +85,11 @@ func decryptCBC(key []byte, cryptoText string, ivb64 string) string {
 		panic("ciphertext too short")
 	}
 
-	// iv := ciphertext[:aes.BlockSize]
-	//ciphertext = ciphertext[aes.BlockSize:]
-
 	cbc := cipher.NewCBCDecrypter(block, iv)
 	cbc.CryptBlocks(ciphertext, ciphertext)
 
 	plaintext := fmt.Sprintf("%s", Unpad(ciphertext))
 
-	//log.Info(fmt.Sprintf("decrypted:[%s]", plaintext))
 	return plaintext
 }
 
