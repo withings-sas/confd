@@ -25,5 +25,5 @@ rsync -az --delete --exclude="bin/" --exclude="go/" ./ $BUILD_USER@$BUILD_SERVER
 
 ssh $BUILD_USER@$BUILD_SERVER "cd $BUILD_PATH; bash build.sh $BUILD_PATH/go"
 
-rsync -avz --dry-run $BUILD_USER@$BUILD_SERVER:$BUILD_PATH/bin/ bin/
+rsync -avz $BUILD_USER@$BUILD_SERVER:$BUILD_PATH/bin/ bin/
 
