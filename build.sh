@@ -12,5 +12,6 @@ mkdir -p mkdir go/src/git.corp.withings.com
 ln -s $(pwd) go/src/git.corp.withings.com/confd
 
 echo "Building confd..."
+[[ -d ]] && rm -rf bin
 mkdir -p bin
 go build -o bin/confd .
