@@ -7,7 +7,9 @@ export GOPATH=$1
 go get github.com/BurntSushi/toml
 go get github.com/go-sql-driver/mysql
 go get github.com/kelseyhightower/confd
-ln -s . go/src/git.corp.withings.com/confd
+
+mkdir -p mkdir go/src/git.corp.withings.com
+ln -s $(pwd) go/src/git.corp.withings.com/confd
 
 echo "Building confd..."
 mkdir -p bin
